@@ -4,6 +4,8 @@
 Debug
 si
 *.bak
+*.o
+.ver
 
 # source sight project files
 *.IAB
