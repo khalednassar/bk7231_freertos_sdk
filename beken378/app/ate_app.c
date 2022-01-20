@@ -58,7 +58,7 @@ void ate_start(void)
 {
     app_pre_start();
 
-    cli_init();
+    // cli_init();
 
     ATE_PRT("ate_start\r\n");
 }

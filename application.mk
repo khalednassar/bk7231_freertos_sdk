@@ -186,15 +186,15 @@ SRC_C =
 DRAM_C =
 
 #application layer
-SRC_C += ./beken378/app/airkiss/airkiss_main.c
+#SRC_C += ./beken378/app/airkiss/airkiss_main.c
 SRC_C += ./beken378/app/app.c
 SRC_C += ./beken378/app/ate_app.c
 SRC_C += ./beken378/app/config/param_config.c
-SRC_C += ./beken378/app/ftp/ftpd.c
-SRC_C += ./beken378/app/ftp/vfs.c
-SRC_C += ./beken378/app/led/app_led.c
-SRC_C += ./beken378/app/net_work/app_lwip_tcp.c
-SRC_C += ./beken378/app/net_work/app_lwip_udp.c
+#SRC_C += ./beken378/app/ftp/ftpd.c
+#SRC_C += ./beken378/app/ftp/vfs.c
+#SRC_C += ./beken378/app/led/app_led.c
+#SRC_C += ./beken378/app/net_work/app_lwip_tcp.c
+#SRC_C += ./beken378/app/net_work/app_lwip_udp.c
 SRC_C += ./beken378/app/http/utils_httpc.c
 SRC_C += ./beken378/app/http/lite-log.c
 SRC_C += ./beken378/app/http/utils_net.c
@@ -435,7 +435,7 @@ SRC_C += ./beken378/func/user_driver/BkDriverGpio.c
 SRC_C += ./beken378/func/user_driver/BkDriverPwm.c
 SRC_C += ./beken378/func/user_driver/BkDriverUart.c
 SRC_C += ./beken378/func/user_driver/BkDriverWdg.c
-SRC_C += ./beken378/func/wlan_ui/wlan_cli.c
+#SRC_C += ./beken378/func/wlan_ui/wlan_cli.c
 SRC_C += ./beken378/func/wlan_ui/wlan_ui.c
 
 #rwnx ip module
@@ -539,6 +539,7 @@ DEPENDENCY_S_LIST = $(addprefix $(OBJ_DIR)/,$(patsubst %.S,%.d,$(SRC_S_LIST)))
 # -------------------------------------------------------------------
 CFLAGS =
 CFLAGS += -g -marm -mcpu=arm968e-s -march=armv5te -mthumb-interwork -mlittle-endian -Wall -std=c99 -ffunction-sections -Wall -fsigned-char -fdata-sections -Wunknown-pragmas
+CFLAGS += -DCFG_SOC_NAME=SOC_BK7231 -DCFG_ENABLE_USER_APP=1
 
 ASMFLAGS = 
 ASMFLAGS += -g -marm -mcpu=arm968e-s -march=armv5te -x assembler-with-cpp

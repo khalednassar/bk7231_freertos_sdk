@@ -720,7 +720,7 @@ void app_start(void)
     app_pre_start();
 
 #if (!CFG_SUPPORT_ALIOS && !CFG_SUPPORT_RTT)
-    cli_init();
+    // cli_init();
 #endif
 
 #if CFG_UDISK_MP3
