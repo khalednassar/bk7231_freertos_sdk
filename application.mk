@@ -1,11 +1,11 @@
 
 # Initialize tool chain
 # -------------------------------------------------------------------
-ARM_GCC_TOOLCHAIN = ./gcc-arm-none-eabi-5_4-2016q3/bin
+ARM_GCC_TOOLCHAIN ?= ./gcc-arm-none-eabi-5_4-2016q3/bin
 
 CROSS_COMPILE = $(ARM_GCC_TOOLCHAIN)/arm-none-eabi-
 
-ota_idx = 1
+ota_idx = 2
 
 # Compilation tools
 AR = $(CROSS_COMPILE)ar
@@ -17,7 +17,29 @@ GDB = $(CROSS_COMPILE)gdb
 OBJCOPY = $(CROSS_COMPILE)objcopy
 OBJDUMP = $(CROSS_COMPILE)objdump
 
+Q=@
+ifeq ($(V),1)
+Q=
+endif
+
+POSIX =
 OS := $(shell uname)
+
+ifeq ($(findstring MINGW32_NT, $(OS)), MINGW32_NT) 
+CHANGEMOD = echo chmod
+ENCRYPT = encrypt.exe
+else
+CHANGEMOD = chmod
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+ENCRYPT = encrypt
+POSIX = "Linux"
+endif
+ifeq ($(UNAME_S),Darwin)
+ENCRYPT = encrypt.darwin
+POSIX = "Darwin"
+endif
+endif
 
 ifeq ($(findstring CYGWIN, $(OS)), CYGWIN) 
 PICK = $(AMEBA_TOOLDIR)pick.exe
@@ -54,6 +76,7 @@ INCLUDES += -I./demos/os/os_queue
 INCLUDES += -I./demos/os/os_sem
 INCLUDES += -I./demos/helloworld
 INCLUDES += -I./demos/net/TCP_Client
+INCLUDES += -I./demos/net/uart1_tcp_server/
 INCLUDES += -I./demos/os/OS_thread
 INCLUDES += -I./demos
 INCLUDES += -I./beken378/func/music_player/fs_fat
@@ -116,6 +139,7 @@ INCLUDES += -I./beken378/app/standalone-ap
 INCLUDES += -I./beken378/func/hostapd-2.5/hostapd
 INCLUDES += -I./beken378/func/ethernet_intf
 INCLUDES += -I./beken378/app/standalone-station
+INCLUDES += -I./beken378/app/http
 INCLUDES += -I./beken378/func/hostapd-2.5/src/common
 INCLUDES += -I./beken378/func/hostapd-2.5/src/drivers
 INCLUDES += -I./beken378/driver/usb/src/systems/none
@@ -144,6 +168,7 @@ INCLUDES += -I./beken378/driver/general_dma
 INCLUDES += -I./beken378/driver/spidma
 INCLUDES += -I./beken378/os/include
 INCLUDES += -I./beken378/func/rwnx_intf
+INCLUDES += -I./beken378/func/video_transfer
 INCLUDES += -I./beken378/app
 INCLUDES += -I./beken378/app/ftp
 INCLUDES += -I./beken378/app/led
@@ -162,12 +187,17 @@ DRAM_C =
 #application layer
 SRC_C += ./beken378/app/airkiss/airkiss_main.c
 SRC_C += ./beken378/app/app.c
+SRC_C += ./beken378/app/ate_app.c
 SRC_C += ./beken378/app/config/param_config.c
 SRC_C += ./beken378/app/ftp/ftpd.c
 SRC_C += ./beken378/app/ftp/vfs.c
 SRC_C += ./beken378/app/led/app_led.c
 SRC_C += ./beken378/app/net_work/app_lwip_tcp.c
 SRC_C += ./beken378/app/net_work/app_lwip_udp.c
+SRC_C += ./beken378/app/http/utils_httpc.c
+SRC_C += ./beken378/app/http/lite-log.c
+SRC_C += ./beken378/app/http/utils_net.c
+SRC_C += ./beken378/app/http/utils_timer.c
 SRC_C += ./beken378/app/standalone-ap/sa_ap.c
 SRC_C += ./beken378/app/standalone-station/sa_station.c
 SRC_C += ./beken378/func/joint_up/role_launch.c
@@ -186,13 +216,15 @@ SRC_C += ./beken378/driver/fft/fft.c
 SRC_C += ./beken378/driver/flash/flash.c
 SRC_C += ./beken378/driver/general_dma/general_dma.c
 SRC_C += ./beken378/driver/gpio/gpio.c
-#SRC_C += ./beken378/driver/i2s/i2s.c
+SRC_C += ./beken378/driver/i2s/i2s.c
 SRC_C += ./beken378/driver/icu/icu.c
 SRC_C += ./beken378/driver/intc/intc.c
 SRC_C += ./beken378/driver/irda/irda.c
 SRC_C += ./beken378/driver/macphy_bypass/mac_phy_bypass.c
 SRC_C += ./beken378/driver/phy/phy_trident.c
 SRC_C += ./beken378/driver/pwm/pwm.c
+SRC_C += ./beken378/driver/pwm/mcu_ps_timer.c
+SRC_C += ./beken378/driver/rw_pub/rw_platf_pub.c
 SRC_C += ./beken378/driver/saradc/saradc.c
 SRC_C += ./beken378/driver/sdcard/sdcard.c
 SRC_C += ./beken378/driver/sdcard/sdio_driver.c
@@ -239,13 +271,13 @@ SRC_C += ./beken378/driver/usb/usb.c
 SRC_C += ./beken378/driver/wdt/wdt.c
 
 #function layer
-SRC_C += ./beken378/func/bk7011_cal/bk7011_cal.c
-SRC_C += ./beken378/func/bk7011_cal/manual_cal.c
+SRC_C += ./beken378/func/bk7011_cal/bk7231_cal.c
+SRC_C += ./beken378/func/bk7011_cal/manual_cal_bk7231.c
 SRC_C += ./beken378/func/func.c
 SRC_C += ./beken378/func/hostapd-2.5/bk_patch/ddrv.c
 SRC_C += ./beken378/func/hostapd-2.5/bk_patch/signal.c
 SRC_C += ./beken378/func/hostapd-2.5/bk_patch/sk_intf.c
-SRC_C += ./beken378/func/hostapd-2.5/bk_patch/socket.c
+SRC_C += ./beken378/func/hostapd-2.5/bk_patch/fake_socket.c
 SRC_C += ./beken378/func/hostapd-2.5/hostapd/main_none.c
 SRC_C += ./beken378/func/hostapd-2.5/src/ap/ap_config.c
 SRC_C += ./beken378/func/hostapd-2.5/src/ap/ap_drv_ops.c
@@ -374,6 +406,8 @@ SRC_C += ./beken378/func/lwip_intf/tcp_server.c
 SRC_C += ./beken378/func/misc/fake_clock.c
 SRC_C += ./beken378/func/misc/target_util.c
 SRC_C += ./beken378/func/power_save/power_save.c
+SRC_C += ./beken378/func/power_save/manual_ps.c
+SRC_C += ./beken378/func/power_save/mcu_ps.c
 SRC_C += ./beken378/func/rf_test/rx_sensitivity.c
 SRC_C += ./beken378/func/rf_test/tx_evm.c
 SRC_C += ./beken378/func/rwnx_intf/rw_ieee80211.c
@@ -404,70 +438,70 @@ SRC_C += ./beken378/func/wlan_ui/wlan_cli.c
 SRC_C += ./beken378/func/wlan_ui/wlan_ui.c
 
 #rwnx ip module
-SRC_C += ./beken378/ip/common/co_dlist.c
-SRC_C += ./beken378/ip/common/co_list.c
-SRC_C += ./beken378/ip/common/co_math.c
-SRC_C += ./beken378/ip/common/co_pool.c
-SRC_C += ./beken378/ip/common/co_ring.c
-SRC_C += ./beken378/ip/ke/ke_env.c
-SRC_C += ./beken378/ip/ke/ke_event.c
-SRC_C += ./beken378/ip/ke/ke_msg.c
-SRC_C += ./beken378/ip/ke/ke_queue.c
-SRC_C += ./beken378/ip/ke/ke_task.c
-SRC_C += ./beken378/ip/ke/ke_timer.c
-SRC_C += ./beken378/ip/lmac/src/chan/chan.c
-SRC_C += ./beken378/ip/lmac/src/hal/hal_desc.c
-SRC_C += ./beken378/ip/lmac/src/hal/hal_dma.c
-SRC_C += ./beken378/ip/lmac/src/hal/hal_machw.c
-SRC_C += ./beken378/ip/lmac/src/hal/hal_mib.c
-SRC_C += ./beken378/ip/lmac/src/mm/mm_bcn.c
-SRC_C += ./beken378/ip/lmac/src/mm/mm.c
-SRC_C += ./beken378/ip/lmac/src/mm/mm_task.c
-SRC_C += ./beken378/ip/lmac/src/mm/mm_timer.c
-SRC_C += ./beken378/ip/lmac/src/p2p/p2p.c
-SRC_C += ./beken378/ip/lmac/src/ps/ps.c
-SRC_C += ./beken378/ip/lmac/src/rd/rd.c
-SRC_C += ./beken378/ip/lmac/src/rwnx/rwnx.c
-SRC_C += ./beken378/ip/lmac/src/rx/rxl/rxl_cntrl.c
-SRC_C += ./beken378/ip/lmac/src/rx/rxl/rxl_hwdesc.c
-SRC_C += ./beken378/ip/lmac/src/rx/rx_swdesc.c
-SRC_C += ./beken378/ip/lmac/src/scan/scan.c
-SRC_C += ./beken378/ip/lmac/src/scan/scan_shared.c
-SRC_C += ./beken378/ip/lmac/src/scan/scan_task.c
-SRC_C += ./beken378/ip/lmac/src/sta/sta_mgmt.c
-SRC_C += ./beken378/ip/lmac/src/td/td.c
-SRC_C += ./beken378/ip/lmac/src/tdls/tdls.c
-SRC_C += ./beken378/ip/lmac/src/tdls/tdls_task.c
-SRC_C += ./beken378/ip/lmac/src/tpc/tpc.c
-SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_buffer.c
-SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_buffer_shared.c
-SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_cfm.c
-SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_cntrl.c
-SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_frame.c
-SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_frame_shared.c
-SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_hwdesc.c
-SRC_C += ./beken378/ip/lmac/src/tx/tx_swdesc.c
-SRC_C += ./beken378/ip/lmac/src/vif/vif_mgmt.c
-SRC_C += ./beken378/ip/mac/mac.c
-SRC_C += ./beken378/ip/mac/mac_ie.c
-SRC_C += ./beken378/ip/umac/src/apm/apm.c
-SRC_C += ./beken378/ip/umac/src/apm/apm_task.c
-SRC_C += ./beken378/ip/umac/src/bam/bam.c
-SRC_C += ./beken378/ip/umac/src/bam/bam_task.c
-SRC_C += ./beken378/ip/umac/src/me/me.c
-SRC_C += ./beken378/ip/umac/src/me/me_mgmtframe.c
-SRC_C += ./beken378/ip/umac/src/me/me_mic.c
-SRC_C += ./beken378/ip/umac/src/me/me_task.c
-SRC_C += ./beken378/ip/umac/src/me/me_utils.c
-SRC_C += ./beken378/ip/umac/src/rc/rc_basic.c
-SRC_C += ./beken378/ip/umac/src/rc/rc.c
-SRC_C += ./beken378/ip/umac/src/rxu/rxu_cntrl.c
-SRC_C += ./beken378/ip/umac/src/scanu/scanu.c
-SRC_C += ./beken378/ip/umac/src/scanu/scanu_shared.c
-SRC_C += ./beken378/ip/umac/src/scanu/scanu_task.c
-SRC_C += ./beken378/ip/umac/src/sm/sm.c
-SRC_C += ./beken378/ip/umac/src/sm/sm_task.c
-SRC_C += ./beken378/ip/umac/src/txu/txu_cntrl.c
+#SRC_C += ./beken378/ip/common/co_dlist.c
+#SRC_C += ./beken378/ip/common/co_list.c
+#SRC_C += ./beken378/ip/common/co_math.c
+#SRC_C += ./beken378/ip/common/co_pool.c
+#SRC_C += ./beken378/ip/common/co_ring.c
+#SRC_C += ./beken378/ip/ke/ke_env.c
+#SRC_C += ./beken378/ip/ke/ke_event.c
+#SRC_C += ./beken378/ip/ke/ke_msg.c
+#SRC_C += ./beken378/ip/ke/ke_queue.c
+#SRC_C += ./beken378/ip/ke/ke_task.c
+#SRC_C += ./beken378/ip/ke/ke_timer.c
+#SRC_C += ./beken378/ip/lmac/src/chan/chan.c
+#SRC_C += ./beken378/ip/lmac/src/hal/hal_desc.c
+#SRC_C += ./beken378/ip/lmac/src/hal/hal_dma.c
+#SRC_C += ./beken378/ip/lmac/src/hal/hal_machw.c
+#SRC_C += ./beken378/ip/lmac/src/hal/hal_mib.c
+#SRC_C += ./beken378/ip/lmac/src/mm/mm_bcn.c
+#SRC_C += ./beken378/ip/lmac/src/mm/mm.c
+#SRC_C += ./beken378/ip/lmac/src/mm/mm_task.c
+#SRC_C += ./beken378/ip/lmac/src/mm/mm_timer.c
+#SRC_C += ./beken378/ip/lmac/src/p2p/p2p.c
+#SRC_C += ./beken378/ip/lmac/src/ps/ps.c
+#SRC_C += ./beken378/ip/lmac/src/rd/rd.c
+#SRC_C += ./beken378/ip/lmac/src/rwnx/rwnx.c
+#SRC_C += ./beken378/ip/lmac/src/rx/rxl/rxl_cntrl.c
+#SRC_C += ./beken378/ip/lmac/src/rx/rxl/rxl_hwdesc.c
+#SRC_C += ./beken378/ip/lmac/src/rx/rx_swdesc.c
+#SRC_C += ./beken378/ip/lmac/src/scan/scan.c
+#SRC_C += ./beken378/ip/lmac/src/scan/scan_shared.c
+#SRC_C += ./beken378/ip/lmac/src/scan/scan_task.c
+#SRC_C += ./beken378/ip/lmac/src/sta/sta_mgmt.c
+#SRC_C += ./beken378/ip/lmac/src/td/td.c
+#SRC_C += ./beken378/ip/lmac/src/tdls/tdls.c
+#SRC_C += ./beken378/ip/lmac/src/tdls/tdls_task.c
+#SRC_C += ./beken378/ip/lmac/src/tpc/tpc.c
+#SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_buffer.c
+#SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_buffer_shared.c
+#SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_cfm.c
+#SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_cntrl.c
+#SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_frame.c
+#SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_frame_shared.c
+#SRC_C += ./beken378/ip/lmac/src/tx/txl/txl_hwdesc.c
+#SRC_C += ./beken378/ip/lmac/src/tx/tx_swdesc.c
+#SRC_C += ./beken378/ip/lmac/src/vif/vif_mgmt.c
+#SRC_C += ./beken378/ip/mac/mac.c
+#SRC_C += ./beken378/ip/mac/mac_ie.c
+#SRC_C += ./beken378/ip/umac/src/apm/apm.c
+#SRC_C += ./beken378/ip/umac/src/apm/apm_task.c
+#SRC_C += ./beken378/ip/umac/src/bam/bam.c
+#SRC_C += ./beken378/ip/umac/src/bam/bam_task.c
+#SRC_C += ./beken378/ip/umac/src/me/me.c
+#SRC_C += ./beken378/ip/umac/src/me/me_mgmtframe.c
+#SRC_C += ./beken378/ip/umac/src/me/me_mic.c
+#SRC_C += ./beken378/ip/umac/src/me/me_task.c
+#SRC_C += ./beken378/ip/umac/src/me/me_utils.c
+#SRC_C += ./beken378/ip/umac/src/rc/rc_basic.c
+#SRC_C += ./beken378/ip/umac/src/rc/rc.c
+#SRC_C += ./beken378/ip/umac/src/rxu/rxu_cntrl.c
+#SRC_C += ./beken378/ip/umac/src/scanu/scanu.c
+#SRC_C += ./beken378/ip/umac/src/scanu/scanu_shared.c
+#SRC_C += ./beken378/ip/umac/src/scanu/scanu_task.c
+#SRC_C += ./beken378/ip/umac/src/sm/sm.c
+#SRC_C += ./beken378/ip/umac/src/sm/sm_task.c
+#SRC_C += ./beken378/ip/umac/src/txu/txu_cntrl.c
 
 #operation system module
 SRC_C += ./beken378/os/FreeRTOSv9.0.0/FreeRTOS/Source/croutine.c
@@ -480,7 +514,6 @@ SRC_C += ./beken378/os/FreeRTOSv9.0.0/FreeRTOS/Source/tasks.c
 SRC_C += ./beken378/os/FreeRTOSv9.0.0/FreeRTOS/Source/timers.c
 SRC_C += ./beken378/os/FreeRTOSv9.0.0/rtos_pub.c
 SRC_C += ./beken378/os/mem_arch.c
-SRC_C += ./beken378/os/mmgmt.c
 SRC_C += ./beken378/os/str_arch.c
 
 #examples for customer
@@ -514,7 +547,7 @@ LFLAGS += -g -Wl,--gc-sections -marm -mcpu=arm968e-s
 
 
 LIBFLAGS =
-LIBFLAGS += -L./beken378/app/airkiss -lairkiss
+LIBFLAGS += -L./beken378/app/airkiss -lairkiss -L./beken378/lib -lrwnx
 
 # Compile
 # -------------------------------------------------------------------
@@ -555,7 +588,7 @@ manipulate_images:
 	$(NM) $(BIN_DIR)/$(TARGET).axf | sort > $(BIN_DIR)/$(TARGET).nmap
 
 	@# add tuya bin output
-	@mkdir -p $(TY_OUTPUT)
+	@if [ ! -z $(TY_OUTPUT) ]; then mkdir -p $(TY_OUTPUT); fi
 	
 ifeq ("${ota_idx}", "1")
 	cat $(BIN_DIR)/xip_image2.p.bin > $(BIN_DIR)/$(IMAGE2_OTA1)
