@@ -1,7 +1,7 @@
 
 # Initialize tool chain
 # -------------------------------------------------------------------
-ARM_GCC_TOOLCHAIN ?= ./gcc-arm-none-eabi-5_4-2016q3/bin
+ARM_GCC_TOOLCHAIN ?= ./toolchain/gcc-arm-none-eabi-10.3-2021.10/bin
 
 CROSS_COMPILE = $(ARM_GCC_TOOLCHAIN)/arm-none-eabi-
 
@@ -62,6 +62,7 @@ all: application manipulate_images
 mp: application manipulate_images
 
 TARGET=Debug
+IMAGE2_OTA1 = $(TARGET).ota1
 
 OBJ_DIR=$(TARGET)/obj
 BIN_DIR=$(TARGET)/bin
@@ -570,6 +571,7 @@ application: prerequirement build_info $(SRC_O) $(SRC_S_O) $(TY_IOT_LIB)
 ifeq ("${ota_idx}", "1")
 	$(LD) $(LFLAGS) -o $(BIN_DIR)/$(TARGET).axf  $(OBJ_LIST)  $(OBJ_S_LIST) $(LIBFLAGS) -T./beken378/build/bk7231.ld
 else ifeq ("${ota_idx}", "2")
+	$(LD) $(LFLAGS) -o $(BIN_DIR)/$(TARGET).axf  $(OBJ_LIST)  $(OBJ_S_LIST) $(LIBFLAGS) -T./beken378/build/bk7231_ota.ld
 else
 	@echo ===========================================================
 	@echo ota_idx must be "1" or "2"
@@ -597,6 +599,8 @@ ifeq ("${ota_idx}", "1")
 	$(CHKSUM) $(BIN_DIR)/$(IMAGE2_OTA1) || true
 	@# add by tuya
 	cp $(BIN_DIR)/$(IMAGE2_OTA1) $(TY_OUTPUT)/$(APP_BIN_NAME)_\(1\)_$(USER_SW_VER).bin
+else ifeq ("${ota_idx}", "2")
+	$(OBJCOPY) -O binary $(BIN_DIR)/$(TARGET).axf $(BIN_DIR)/$(TARGET).bin
 else
 	@echo ===========================================================
 	@echo ota_idx must be "1" or "2"

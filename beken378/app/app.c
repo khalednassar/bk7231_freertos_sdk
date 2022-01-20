@@ -53,7 +53,7 @@ beken_thread_t  init_thread_handle;
 beken_thread_t  app_thread_handle;
 #else
 xTaskHandle  init_thread_handle;
-xTaskHandle  app_thread_handle;
+extern xTaskHandle  app_thread_handle;
 #endif
 uint32_t  init_stack_size = 2000;
 uint32_t  app_stack_size = 2048;
