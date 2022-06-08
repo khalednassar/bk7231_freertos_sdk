@@ -177,6 +177,7 @@ INCLUDES += -I./beken378/func/joint_up
 INCLUDES += -I./beken378/os/FreeRTOSv9.0.0/FreeRTOS/Source/portable/Keil/ARM968es
 INCLUDES += -I./beken378/os/FreeRTOSv9.0.0/FreeRTOS/Source/include
 INCLUDES += -I./beken378/os/FreeRTOSv9.0.0
+INCLUDES += -I./user_app
 
 
 # -------------------------------------------------------------------
@@ -203,6 +204,7 @@ SRC_C += ./beken378/app/standalone-ap/sa_ap.c
 SRC_C += ./beken378/app/standalone-station/sa_station.c
 SRC_C += ./beken378/func/joint_up/role_launch.c
 SRC_C += ./beken378/func/joint_up/reconnect_startup.c
+SRC_C += ./user_app/user_app.c
 
 #demo module
 SRC_C += ./beken378/demo/ieee802_11_demo.c

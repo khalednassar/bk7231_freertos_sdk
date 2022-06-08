@@ -1,7 +1,7 @@
 #ifndef _SYS_CONFIG_H_
 #define _SYS_CONFIG_H_
 
-#define CFG_SUPPORT_BOOTLOADER                     0
+#define CFG_SUPPORT_BOOTLOADER                     1
 
 /*SUMMARY: macro--1: OPEN; --0:CLOSE*/
 
